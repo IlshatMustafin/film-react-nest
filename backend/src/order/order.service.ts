@@ -10,31 +10,33 @@ import { OrderResponseDto } from './dto/order-response.dto';
 export class OrderService {
   constructor(private readonly filmsRepository: FilmsRepository) {}
 
-  async create(dto: CreateOrderDto[]): Promise<OrderResponseDto> {
+  async create(dto: CreateOrderDto): Promise<OrderResponseDto> {
+    console.log('DTO RECEIVED:', JSON.stringify(dto, null, 2));
+
     const created: OrderItemDto[] = [];
     const filmCache = new Map<string, FilmDocument>();
 
-    for (const item of dto) {
-      let film = filmCache.get(item.film);
+    for (const ticket of dto.tickets) {
+      let film = filmCache.get(ticket.film);
 
       if (!film) {
         const found = await this.filmsRepository.findDocumentByFilmId(
-          item.film,
+          ticket.film,
         );
         if (!found) {
-          throw new BadRequestException(`Film ${item.film} not found`);
+          throw new BadRequestException(`Film ${ticket.film} not found`);
         }
         film = found;
-        filmCache.set(item.film, film);
+        filmCache.set(ticket.film, film);
       }
 
-      const session = film.schedule.find((s) => s.id === item.session);
+      const session = film.schedule.find((s) => s.id === ticket.session);
 
       if (!session) {
-        throw new BadRequestException(`Session ${item.session} not found`);
+        throw new BadRequestException(`Session ${ticket.session} not found`);
       }
 
-      const seatKey = `${item.row}:${item.seat}`;
+      const seatKey = `${ticket.row}:${ticket.seat}`;
 
       if (session.taken.includes(seatKey)) {
         throw new BadRequestException(`Seat ${seatKey} is already taken`);
@@ -42,7 +44,8 @@ export class OrderService {
 
       if (
         created.some(
-          (o) => o.session === item.session && `${o.row}:${o.seat}` === seatKey,
+          (o) =>
+            o.session === ticket.session && `${o.row}:${o.seat}` === seatKey,
         )
       ) {
         throw new BadRequestException(
@@ -54,12 +57,12 @@ export class OrderService {
 
       created.push({
         id: randomUUID(),
-        film: item.film,
-        session: item.session,
-        daytime: item.daytime,
-        row: item.row,
-        seat: item.seat,
-        price: item.price,
+        film: ticket.film,
+        session: ticket.session,
+        daytime: ticket.daytime,
+        row: ticket.row,
+        seat: ticket.seat,
+        price: ticket.price,
       });
     }
 

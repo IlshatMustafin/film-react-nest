@@ -7,8 +7,7 @@ export class OrderController {
   constructor(private readonly orderService: OrderService) {}
 
   @Post()
-  create(@Body() dto: CreateOrderDto | CreateOrderDto[]) {
-    const orders = Array.isArray(dto) ? dto : [dto];
-    return this.orderService.create(orders);
+  create(@Body() dto: CreateOrderDto) {
+    return this.orderService.create(dto);
   }
 }
