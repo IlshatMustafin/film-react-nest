@@ -2,17 +2,15 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { FilmsRepository } from '../repository/films.repository';
 import { FilmDocument } from '../films/schemas/film.schema';
+import { ListResponseDto } from '../common/dto/list-response.dto';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { OrderItemDto } from './dto/order-item.dto';
-import { OrderResponseDto } from './dto/order-response.dto';
 
 @Injectable()
 export class OrderService {
   constructor(private readonly filmsRepository: FilmsRepository) {}
 
-  async create(dto: CreateOrderDto): Promise<OrderResponseDto> {
-    console.log('DTO RECEIVED:', JSON.stringify(dto, null, 2));
-
+  async create(dto: CreateOrderDto): Promise<ListResponseDto<OrderItemDto>> {
     const created: OrderItemDto[] = [];
     const filmCache = new Map<string, FilmDocument>();
 
@@ -34,6 +32,12 @@ export class OrderService {
 
       if (!session) {
         throw new BadRequestException(`Session ${ticket.session} not found`);
+      }
+
+      if (ticket.row > session.rows || ticket.seat > session.seats) {
+        throw new BadRequestException(
+          `Seat ${ticket.row}:${ticket.seat} is out of hall bounds (max ${session.rows}:${session.seats})`,
+        );
       }
 
       const seatKey = `${ticket.row}:${ticket.seat}`;
@@ -59,10 +63,10 @@ export class OrderService {
         id: randomUUID(),
         film: ticket.film,
         session: ticket.session,
-        daytime: ticket.daytime,
+        daytime: session.daytime,
         row: ticket.row,
         seat: ticket.seat,
-        price: ticket.price,
+        price: session.price,
       });
     }
 

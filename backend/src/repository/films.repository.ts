@@ -8,17 +8,15 @@ export class FilmsRepository {
   constructor(@InjectModel(Film.name) private filmModel: Model<FilmDocument>) {}
 
   async findAll(): Promise<Film[]> {
-    return this.filmModel.find().select('-_id -__v').lean().exec() as Promise<
-      Film[]
-    >;
+    return this.filmModel.find().select('-_id -__v').lean<Film[]>().exec();  
   }
 
   async findByFilmId(id: string): Promise<Film | null> {
     return this.filmModel
-      .findOne({ id })
-      .select('-_id -__v')
-      .lean()
-      .exec() as Promise<Film | null>;
+    .findOne({ id })
+    .select('-_id -__v')
+    .lean<Film | null>()
+    .exec();  
   }
 
   async findDocumentByFilmId(id: string): Promise<FilmDocument | null> {

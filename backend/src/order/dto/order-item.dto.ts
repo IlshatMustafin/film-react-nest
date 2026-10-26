@@ -1,9 +1,5 @@
-export class OrderItemDto {
+import { TicketDto } from './create-order.dto';
+
+export class OrderItemDto extends TicketDto {
   id: string;
-  film: string;
-  session: string;
-  daytime: string;
-  row: number;
-  seat: number;
-  price: number;
 }

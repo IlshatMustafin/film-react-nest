@@ -2,8 +2,9 @@ import { Type } from 'class-transformer';
 import {
   IsArray,
   IsEmail,
-  IsNumber,
+  IsInt,
   IsString,
+  Min,
   ValidateNested,
 } from 'class-validator';
 
@@ -17,13 +18,19 @@ export class TicketDto {
   @IsString()
   daytime: string;
 
-  @IsNumber()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
   row: number;
 
-  @IsNumber()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
   seat: number;
 
-  @IsNumber()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
   price: number;
 }
 
