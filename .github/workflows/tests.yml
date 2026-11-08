@@ -28,20 +28,6 @@ jobs:
 
   test_endpoints:
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_USER: exampleuser
-          POSTGRES_PASSWORD: examplepassword
-          POSTGRES_DB: exampledb
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
     steps:
     - name: Set up GitHub Actions
       uses: actions/checkout@v4
@@ -51,16 +37,6 @@ jobs:
         node-version: 18.x
     - name: Get testing lib
       run: set -eu && git clone --depth 1 $REP_TESTS $DIR_TESTS
-
-    - name: Install psql client
-      run: sudo apt-get update && sudo apt-get install -y postgresql-client
-
-    - name: Load SQL schema
-      run: |
-        PGPASSWORD=examplepassword psql -h localhost -U exampleuser -d exampledb -f backend/test/prac.init.sql
-        PGPASSWORD=examplepassword psql -h localhost -U exampleuser -d exampledb -f backend/test/prac.films.sql
-        PGPASSWORD=examplepassword psql -h localhost -U exampleuser -d exampledb -f backend/test/prac.shedules.sql
-
     - name: Start project
       run: bash $DIR_TESTS/bin/start_project.sh
       env:
@@ -69,6 +45,5 @@ jobs:
         DATABASE_USERNAME: exampleuser
         DATABASE_PASSWORD: examplepassword
         PORT: 3000
-
     - name: Run tests
       run: bash $DIR_TESTS/bin/endpoints.sh
