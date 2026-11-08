@@ -1,29 +1,29 @@
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { Film, FilmDocument } from '../films/schemas/film.schema';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Film } from '../films/entities/film.entity';
+import { Schedule } from '../films/entities/schedule.entity';
 
 @Injectable()
 export class FilmsRepository {
-  constructor(@InjectModel(Film.name) private filmModel: Model<FilmDocument>) {}
+  constructor(
+    @InjectRepository(Film) private filmRepository: Repository<Film>,
+    @InjectRepository(Schedule)
+    private scheduleRepository: Repository<Schedule>,
+  ) {}
 
   async findAll(): Promise<Film[]> {
-    return this.filmModel.find().select('-_id -__v').lean<Film[]>().exec();  
+    return this.filmRepository.find({ relations: ['schedule'] });
   }
 
   async findByFilmId(id: string): Promise<Film | null> {
-    return this.filmModel
-    .findOne({ id })
-    .select('-_id -__v')
-    .lean<Film | null>()
-    .exec();  
+    return this.filmRepository.findOne({
+      where: { id },
+      relations: ['schedule'],
+    });
   }
 
-  async findDocumentByFilmId(id: string): Promise<FilmDocument | null> {
-    return this.filmModel.findOne({ id }).exec();
-  }
-
-  async save(film: FilmDocument): Promise<FilmDocument> {
-    return film.save();
+  async saveSchedule(schedule: Schedule): Promise<Schedule> {
+    return this.scheduleRepository.save(schedule);
   }
 }
