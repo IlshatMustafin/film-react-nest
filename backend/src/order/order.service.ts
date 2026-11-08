@@ -1,7 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { FilmsRepository } from '../repository/films.repository';
-import { FilmDocument } from '../films/schemas/film.schema';
+import { Film } from '../films/entities/film.entity';
+import { Schedule } from '../films/entities/schedule.entity';
 import { ListResponseDto } from '../common/dto/list-response.dto';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { OrderItemDto } from './dto/order-item.dto';
@@ -12,15 +13,14 @@ export class OrderService {
 
   async create(dto: CreateOrderDto): Promise<ListResponseDto<OrderItemDto>> {
     const created: OrderItemDto[] = [];
-    const filmCache = new Map<string, FilmDocument>();
+    const filmCache = new Map<string, Film>();
+    const schedulesToSave = new Map<string, Schedule>();
 
     for (const ticket of dto.tickets) {
       let film = filmCache.get(ticket.film);
 
       if (!film) {
-        const found = await this.filmsRepository.findDocumentByFilmId(
-          ticket.film,
-        );
+        const found = await this.filmsRepository.findByFilmId(ticket.film);
         if (!found) {
           throw new BadRequestException(`Film ${ticket.film} not found`);
         }
@@ -42,7 +42,9 @@ export class OrderService {
 
       const seatKey = `${ticket.row}:${ticket.seat}`;
 
-      if (session.taken.includes(seatKey)) {
+      const takenArray = session.taken ? session.taken.split(',') : [];
+
+      if (takenArray.includes(seatKey)) {
         throw new BadRequestException(`Seat ${seatKey} is already taken`);
       }
 
@@ -57,7 +59,10 @@ export class OrderService {
         );
       }
 
-      session.taken.push(seatKey);
+      takenArray.push(seatKey);
+      session.taken = takenArray.join(',');
+
+      schedulesToSave.set(session.id, session);
 
       created.push({
         id: randomUUID(),
@@ -70,8 +75,8 @@ export class OrderService {
       });
     }
 
-    for (const film of filmCache.values()) {
-      await this.filmsRepository.save(film);
+    for (const schedule of schedulesToSave.values()) {
+      await this.filmsRepository.saveSchedule(schedule);
     }
 
     return { total: created.length, items: created };
