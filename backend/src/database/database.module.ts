@@ -10,11 +10,9 @@ import { Schedule } from '../films/entities/schedule.entity';
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
         type: 'postgres',
-        host: 'localhost',
-        port: 5432,
+        url: config.get<string>('DATABASE_URL'),
         username: config.get<string>('DATABASE_USERNAME'),
         password: config.get<string>('DATABASE_PASSWORD'),
-        database: 'exampledb',
         entities: [Film, Schedule],
         synchronize: false,
       }),
