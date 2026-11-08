@@ -23,10 +23,6 @@ export class FilmsRepository {
     });
   }
 
-  async findScheduleById(scheduleId: string): Promise<Schedule | null> {
-    return this.scheduleRepository.findOne({ where: { id: scheduleId } });
-  }
-
   async saveSchedule(schedule: Schedule): Promise<Schedule> {
     return this.scheduleRepository.save(schedule);
   }

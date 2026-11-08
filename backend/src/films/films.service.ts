@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { FilmsRepository } from '../repository/films.repository';
 import { ListResponseDto } from '../common/dto/list-response.dto';
 import { Film } from './entities/film.entity';
@@ -20,9 +20,8 @@ export class FilmsService {
 
   async findSchedule(id: string): Promise<ListResponseDto<ScheduleItemDto>> {
     const film = await this.filmsRepository.findByFilmId(id);
-
     if (!film) {
-      return { total: 0, items: [] };
+      throw new NotFoundException(`Film with id ${id} not found`);
     }
 
     return {
@@ -36,7 +35,7 @@ export class FilmsService {
       id: film.id,
       rating: film.rating,
       director: film.director,
-      tags: film.tags ? film.tags.split(',').filter(Boolean) : [],
+      tags: film.tags || [],
       image: film.image,
       cover: film.cover,
       title: film.title,
@@ -56,7 +55,7 @@ export class FilmsService {
       rows: schedule.rows,
       seats: schedule.seats,
       price: schedule.price,
-      taken: schedule.taken ? schedule.taken.split(',').filter(Boolean) : [],
+      taken: schedule.taken || [],
     };
   }
 }

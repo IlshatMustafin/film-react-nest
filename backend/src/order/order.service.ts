@@ -29,7 +29,6 @@ export class OrderService {
       }
 
       const session = film.schedule.find((s) => s.id === ticket.session);
-
       if (!session) {
         throw new BadRequestException(`Session ${ticket.session} not found`);
       }
@@ -41,10 +40,7 @@ export class OrderService {
       }
 
       const seatKey = `${ticket.row}:${ticket.seat}`;
-
-      const takenArray = session.taken ? session.taken.split(',') : [];
-
-      if (takenArray.includes(seatKey)) {
+      if (session.taken.includes(seatKey)) {
         throw new BadRequestException(`Seat ${seatKey} is already taken`);
       }
 
@@ -59,8 +55,7 @@ export class OrderService {
         );
       }
 
-      takenArray.push(seatKey);
-      session.taken = takenArray.join(',');
+      session.taken.push(seatKey);
 
       schedulesToSave.set(session.id, session);
 

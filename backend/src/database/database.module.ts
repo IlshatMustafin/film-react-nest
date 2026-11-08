@@ -10,11 +10,12 @@ import { Schedule } from '../films/entities/schedule.entity';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (config: ConfigService) => {
+        const driver = config.getOrThrow<string>('DATABASE_DRIVER');
         const databaseUrl = config.getOrThrow<string>('DATABASE_URL');
         const url = new URL(databaseUrl);
 
         return {
-          type: 'postgres',
+          type: driver as 'postgres',
           host: url.hostname,
           port: parseInt(url.port || '5432', 10),
           database: url.pathname.replace('/', ''),
