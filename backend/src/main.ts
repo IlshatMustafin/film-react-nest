@@ -1,4 +1,4 @@
-import { ValidationPipe } from '@nestjs/common';
+import { LoggerService, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { NestExpressApplication } from '@nestjs/platform-express';
@@ -6,9 +6,29 @@ import { join } from 'path';
 import rateLimit from 'express-rate-limit';
 
 import { AppModule } from './app.module';
+import { DevLogger } from './logger/dev.logger';
+import { JsonLogger } from './logger/json.logger';
+import { TSKVLogger } from './logger/tskv.logger';
+
+function getLogger(loggerType?: string): LoggerService {
+  switch (loggerType?.toLowerCase()) {
+    case 'json':
+      return new JsonLogger();
+    case 'tskv':
+      return new TSKVLogger();
+    default:
+      return new DevLogger();
+  }
+}
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    bufferLogs: true,
+  });
+
+  const configService = app.get(ConfigService);
+  const loggerType = configService.get<string>('LOGGER_TYPE');
+  app.useLogger(getLogger(loggerType));
 
   app.setGlobalPrefix('api/afisha');
   app.enableCors();
@@ -29,7 +49,6 @@ async function bootstrap() {
     prefix: '/content/afisha/',
   });
 
-  const configService = app.get(ConfigService);
   const port = configService.get<number>('PORT') ?? 3000;
 
   await app.listen(port);
